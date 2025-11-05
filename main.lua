@@ -29,7 +29,7 @@ function love.load()
     Generator.init()
     Generator.print_dungeon()
     Iffy.newTileset('dice', 'dice.png', 68, 68, 0, 0, 136, 204)
-    print("Generator.csv_map_path:", tostring(Generator.csv_map_path))
+    print(":( Generator.csv_map_path: ", tostring(Generator.csv_map_path))
 
     Iffy.newTilemap(Generator.csv_map_path)
     ACTIVE_MAP = Generator.csv_map_path:sub(1, -5) -- Remove .csv extension for Iffy
