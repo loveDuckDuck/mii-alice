@@ -1,27 +1,43 @@
 Vector = require("libraries/hump/vector")
 Iffy = require("libraries/iffy/iffy")
+Util = require("utils")
 Generator = require("generator")
+local ACTIVE_MAP = nil
+function love.draw()
+    Iffy.drawTilemap(ACTIVE_MAP, 'dice')
+end
 
--- function love.draw()
---     for _, room in ipairs(rooms) do
---         for key, value in pairs(room.tiles_position) do
---             Iffy.drawSprite("dice1", (value - 1) * size_of_room.x, (value - 1) * size_of_room.y)
---         end
---     end
--- end
+function love.keypressed(key, scancode, isrepeat)
+    if key == "r" then
+        Generator.init()
+        Generator.print_dungeon()
+        Iffy.newTilemap(Generator.csv_map_path)
+        ACTIVE_MAP = Generator.csv_map_path:sub(1, -5) -- Remove .csv extension for Iffy
+        ACTIVE_MAP = ACTIVE_MAP:gsub(".*/", "")        -- Extract just the filename without path
+        os.remove(Generator.csv_map_path)
+    end
+end
+
+function love.update(dt)
+    if love.keyboard.isDown("escape") then
+        love.event.quit()
+    end
+end
 
 function love.load()
     math.randomseed(os.time())
-
-
-    Generator.init(Vector(3, 3), 7, "C")
+    Generator.init()
     Generator.print_dungeon()
-    Iffy.newTileset("dice.png")
-    Iffy.newSprite("dice", "dice6", 0, 0, 68, 68)
-    Iffy.newSprite("dice", "dice5", 0, 68, 68, 68)
-    Iffy.newSprite("dice", "dice1", 0, 136, 68, 68)
+    Iffy.newTileset('dice', 'dice.png', 68, 68, 0, 0, 136, 204)
+    print("Generator.csv_map_path:", tostring(Generator.csv_map_path))
 
-    Iffy.newSprite("dice", "dice3", 68, 0, 68, 68)
-    Iffy.newSprite("dice", "dice2", 68, 68, 68, 68)
-    Iffy.newSprite("dice", "dice4", 68, 136, 68, 68)
+    Iffy.newTilemap(Generator.csv_map_path)
+    ACTIVE_MAP = Generator.csv_map_path:sub(1, -5) -- Remove .csv extension for Iffy
+    ACTIVE_MAP = ACTIVE_MAP:gsub(".*/", "")        -- Extract just the filename without path
+    local exists, info = FileExists(Generator.csv_map_path)
+    print("File exists:", tostring(exists), tostring(info))
+    local succs, err  = os.remove(Generator.csv_map_path)
+    if not succs then
+        print("Error removing file:", err)
+    end
 end

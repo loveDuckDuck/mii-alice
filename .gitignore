@@ -61,5 +61,7 @@ luac.out
 *.jpg
 
 # Script
-
 *.sh
+
+# CSV files
+*.csv
