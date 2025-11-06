@@ -1,3 +1,9 @@
+GW = 1280
+GH = 720
+
+SX = 1
+SY = 1
+
 function love.conf(t)
 
 	t.identity = nil                   -- The name of the save directory (string)
@@ -6,6 +12,9 @@ function love.conf(t)
 
 	t.window.title = "ALICE"        -- The window title (string)
 	t.window.icon = nil                -- Filepath to an image to use as the window's icon (string)
+
+	t.window.width = GW                -- The window width (number)
+	t.window.height = GH               -- The window height (number)
 
 	t.window.borderless = false        -- Remove all border visuals from the window (boolean)
 	t.window.resizable = true          -- Let the window be user-resizable (boolean)

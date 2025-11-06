@@ -53,12 +53,6 @@ luac.out
 *.flac
 *.ogg
 
-# Image files
-
-*.jpeg
-*.png
-*.pdf
-*.jpg
 
 # Script
 *.sh

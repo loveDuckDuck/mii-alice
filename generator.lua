@@ -9,82 +9,20 @@ local generator = {
 
 }
 
+--[[
+    Variables for dungeon generation
+    TODO : define all the variables at the top of the file
+   ]]
+
 local vector_dungeon_dimensions = { width = 7, height = 5 } -- max dimensions of the dungeon in vectors
 local array_dungeon = {}                                    -- 2D array representing the dungeon layout
 local start_position = Vector(3, 3)                         -- starting tile of the dungeon
-local size_of_room = Vector(3, 3)                           -- size of each room in pixels
-local rooms = {}
+local size_of_room = Vector(7, 7)                           -- size of each room in pixels
 local branches_length = Vector(1, 1)                        -- min and max length of branches
 local branch_candidates = {}                                -- positions where branches can start
 local branches = 3
 
 
-
-local min_floor_width = 2
-local max_floor_width = 5
-local min_floor_height = 2
-local max_floor_height = 5
-local max_overlap_floors = 10
-local fill_gap_size = 4
-
-local floor_layer = {}
-local wall_layer = {}
-
-local directions = {
-    Vector(1, 0),  -- right
-    Vector(-1, 0), -- left
-    Vector(0, 1),  -- down
-    Vector(0, -1), -- up
-}
-
-local floor_tiles = { "F" }
--- need to make a one one correspondence between wall tiles and floor tiles
-local wall_tiles = { "WL", "WR", "WT", "WB", "WBL", "WBR", "WTL", "WTR", "WI" }
-
-
-
-function generator.create_room()
-    local floor_count = love.math.random(1, max_overlap_floors)
-    local floors = {}
-    for _ = 1, floor_count do
-        table.insert(floors, generator.create_floor_rect())
-    end
-
-    generator.draw_floor(floors)
-    generator.fill_gap()
-end
-
-function generator.create_floor_rect()
-    local start_point_range = 5
-    local startPoint = Vector(love.math.random(-start_point_range, start_point_range),
-        love.math.random(-start_point_range, start_point_range))
-    local width = love.math.random(min_floor_width, max_floor_width)
-    local height = love.math.random(min_floor_height, max_floor_height)
-
-    return { position = startPoint, size = Vector(width, height) }
-end
-
-function generator.draw_floor(floors)
-    for _, value in ipairs(floors) do
-        local startPoint = value.position
-        local size = value.size
-        for x = 1, size.x do
-            for y = 1, size.y do
-                table.insert(floor_layer,
-                    {
-                        position = Vector(startPoint.x + x, startPoint.y + y),
-                        value = 0,
-                        tile = floor_tiles[1]
-
-                    })
-            end
-        end
-    end
-end
-
-function generator.fill_gap()
-    local change_list = {}
-end
 
 function generator.init(start_position, length, dungeon_width, dungeon_height, room_width, room_height,
                         branches_length_min, branches_length_max, marker)
@@ -101,7 +39,7 @@ function generator.init(start_position, length, dungeon_width, dungeon_height, r
     generator.initialize_dungeon()
     generator.place_entrance()
     generator.generate_path(start_position, length, marker)
-    generator.generate_branches()
+    --generator.generate_branches() // IN SOSPESO
     generator.generate_rooms()
     -- generator.create_room()
 end
@@ -224,19 +162,33 @@ function generator.write_to_file(subfolder, filename, content)
     end
 end
 
+
 function generator.generate_rooms()
     local csvLines = {}
+
+    -- Constants for clarity
+    local TILE_EMPTY = 0
+    local TILE_FLOOR = 78
+    local TILE_B_T_WALL =1 ;
+    local TILE_R_L_WALL =2 ;
+    
 
     for y = 1, vector_dungeon_dimensions.height do
         for y_csv = 1, size_of_room.y do
             local line = ""
             for x = 1, vector_dungeon_dimensions.width do
                 for x_csv = 1, size_of_room.x do
-                    if array_dungeon[x][y] == 0 then
-                        line = line .. "0,"
-                    else
-                        line = line .. "1,"
+                    local tile_to_draw = TILE_EMPTY
+                    if array_dungeon[x][y] ~= TILE_EMPTY then
+                        if y_csv == 1 or y_csv == size_of_room.y then
+                            tile_to_draw = TILE_R_L_WALL
+                        elseif x_csv == 1 or x_csv == size_of_room.x then
+                             tile_to_draw = TILE_B_T_WALL
+                        else
+                            tile_to_draw = TILE_FLOOR     -- Inner Floor Tile (1)
+                        end
                     end
+                    line = line .. tile_to_draw .. ","
                 end
             end
 
