@@ -1,21 +1,20 @@
 local lfs = require("lfs")
 
-Vector = require("libraries/hump/vector")
-local SUBFOLDER_NAME = "script_outputs"
+local SUBFOLDER_NAME = "csv_random_maps"
 
 
 
 local generator = {
-
-    csv_map_path = ""
+    csv_map_path = io.popen "cd":read '*l'
 
 }
+
 local vector_dungeon_dimensions = { width = 7, height = 5 } -- max dimensions of the dungeon in vectors
 local array_dungeon = {}                                    -- 2D array representing the dungeon layout
 local start_position = Vector(3, 3)                         -- starting tile of the dungeon
 local size_of_room = Vector(3, 3)                           -- size of each room in pixels
 local rooms = {}
-local branches_length = Vector(1, 4)                        -- min and max length of branches
+local branches_length = Vector(1, 1)                        -- min and max length of branches
 local branch_candidates = {}                                -- positions where branches can start
 local branches = 3
 
@@ -28,11 +27,8 @@ local max_floor_height = 5
 local max_overlap_floors = 10
 local fill_gap_size = 4
 
-
 local floor_layer = {}
 local wall_layer = {}
-
-
 
 local directions = {
     Vector(1, 0),  -- right
@@ -90,19 +86,23 @@ function generator.fill_gap()
     local change_list = {}
 end
 
-function generator.init(start_position, length, marker, dungeon_width, dungeon_height)
+function generator.init(start_position, length, dungeon_width, dungeon_height, room_width, room_height,
+                        branches_length_min, branches_length_max, marker)
     start_position = start_position or Vector(3, 3)
     length = length or 13
     marker = marker or "C"
+    size_of_room.x = room_width or size_of_room.x
+    size_of_room.y = room_height or size_of_room.y
+    branches_length.x = branches_length_min or branches_length.x
+    branches_length.y = branches_length_max or branches_length.y
     vector_dungeon_dimensions.width = dungeon_width or vector_dungeon_dimensions.width
     vector_dungeon_dimensions.height = dungeon_height or vector_dungeon_dimensions.height
+
     generator.initialize_dungeon()
     generator.place_entrance()
     generator.generate_path(start_position, length, marker)
     generator.generate_branches()
     generator.generate_rooms()
-
-
     -- generator.create_room()
 end
 
@@ -190,25 +190,27 @@ function generator.generate_branches()
     end
 end
 
--- Function to write content to a file in a specified subdirectory.
-function generator.write_to_file(subfolder, filename, content)
+--[[ Function to write content to a file in a specified subdirectory.
     -- 1. Check if the subfolder exists and create it if it doesn't
     -- lfs.attributes returns nil if the path does not exist.
-    if lfs.attributes(subfolder) == nil then
         -- Directory does not exist, attempt to create it
+            -- If mkdir fails (e.g., due to permission issues), stop execution.
+    -- 2. Construct the full file path (using '/' for cross-platform compatibility)
+    -- 3. Open the file in write mode ("w")
+
+]]
+function generator.write_to_file(subfolder, filename, content)
+    if lfs.attributes(subfolder) == nil then
         if lfs.mkdir(subfolder) then
             print("Created required output directory: " .. subfolder)
         else
-            -- If mkdir fails (e.g., due to permission issues), stop execution.
             io.stderr:write("Error: Could not create directory " .. subfolder .. ". Check permissions.\n")
             return
         end
     end
-    
-    -- 2. Construct the full file path (using '/' for cross-platform compatibility)
+
     local full_filepath = subfolder .. "/" .. filename
 
-    -- 3. Open the file in write mode ("w")
     local file, err = io.open(full_filepath, "w")
 
     if file then
@@ -222,20 +224,14 @@ function generator.write_to_file(subfolder, filename, content)
     end
 end
 
-
 function generator.generate_rooms()
     local csvLines = {}
 
-    -- Loop through the major 'dungeon' grid cells (rows)
     for y = 1, vector_dungeon_dimensions.height do
-        -- Loop through the rows within each room block (y_csv)
         for y_csv = 1, size_of_room.y do
             local line = ""
-            -- Loop through the major 'dungeon' grid cells (columns)
             for x = 1, vector_dungeon_dimensions.width do
-                -- Loop through the columns within each room block (x_csv)
                 for x_csv = 1, size_of_room.x do
-                    -- Append '0' and a comma, making sure to handle the last element in the line
                     if array_dungeon[x][y] == 0 then
                         line = line .. "0,"
                     else
@@ -250,15 +246,14 @@ function generator.generate_rooms()
             end
 
             -- Insert the complete line into the table, followed by a newline
-            table.insert(csvLines, line )
+            table.insert(csvLines, line)
         end
     end
 
     local filename = UUID() .. ".csv"
     local csvData = table.concat(csvLines, "\n")
-    generator.write_to_file(SUBFOLDER_NAME,filename , csvData)
-    generator.csv_map_path =  SUBFOLDER_NAME .. "/" .. filename
-
+    generator.write_to_file(SUBFOLDER_NAME, filename, csvData)
+    generator.csv_map_path = SUBFOLDER_NAME .. "/" .. filename
 end
 
 --[[
@@ -275,14 +270,6 @@ function generator.print_dungeon()
             end
         end
         print(row)
-    end
-end
-
-function generator.get_rooms()
-    if #rooms > 0 then
-        return rooms
-    else
-        return nil
     end
 end
 
