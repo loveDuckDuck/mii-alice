@@ -162,33 +162,89 @@ function generator.write_to_file(subfolder, filename, content)
     end
 end
 
+-- Constants for clarity
+local TILE_EMPTY = 0
+local TILE_FLOOR = 78
+local TILE_B_T_WALL = 1;
+local TILE_R_L_WALL = 2;
+local TILE_DOOR = 79
+
+local RIGHT = "RI"
+local LEFT = "LE"
+local TOP = "TO"
+local BOTTOM = "BO"
+
+
+
+
+-- function that retrun a string with the tile to draw based on the neighbours
+-- LEFT RIGHT TOP BOTTOM
+function generator.there_is_a_neighbour(x, y, x_csv, y_csv)
+    if (x < vector_dungeon_dimensions.width and array_dungeon[x + 1][y] ~= 0)
+        and (x_csv == size_of_room.x and y_csv == math.ceil(size_of_room.y / 2))
+    then
+        return RIGHT
+        -- i got neighbours on my left
+    elseif (x > 1 and array_dungeon[x - 1][y] ~= 0)
+        and (x_csv == 1 and y_csv == math.ceil(size_of_room.y / 2)) then
+        return LEFT
+        -- i got neighbours on my top
+    elseif (y < vector_dungeon_dimensions.height and array_dungeon[x][y + 1] and array_dungeon[x][y + 1] ~= 0)
+        and (y_csv == size_of_room.y and x_csv == math.ceil(size_of_room.x / 2)) then
+        return TOP
+        -- i got neighbours on my bottom
+    elseif (y > 1 and array_dungeon[x][y - 1] ~= 0)
+        and (y_csv == 1 and x_csv == math.ceil(size_of_room.x / 2)) then
+        return BOTTOM
+    else
+        return nil
+    end
+end
+
+function generator.there_is_a_neighbour_on_dungeon_genetor()
+
+end
 
 function generator.generate_rooms()
     local csvLines = {}
 
-    -- Constants for clarity
-    local TILE_EMPTY = 0
-    local TILE_FLOOR = 78
-    local TILE_B_T_WALL =1 ;
-    local TILE_R_L_WALL =2 ;
-    
-
     for y = 1, vector_dungeon_dimensions.height do
         for y_csv = 1, size_of_room.y do
             local line = ""
+
             for x = 1, vector_dungeon_dimensions.width do
                 for x_csv = 1, size_of_room.x do
                     local tile_to_draw = TILE_EMPTY
+
+                    --add the door
                     if array_dungeon[x][y] ~= TILE_EMPTY then
-                        if y_csv == 1 or y_csv == size_of_room.y then
+                        -- i got neighbours on my right
+                        
+                        local neighbour = generator.there_is_a_neighbour(x, y, x_csv, y_csv)
+                        if neighbour == RIGHT then
+                            tile_to_draw = TILE_DOOR
+                        elseif neighbour == LEFT then
+                            tile_to_draw = TILE_DOOR
+                        elseif neighbour == TOP then
+                            tile_to_draw = TILE_DOOR
+                        elseif neighbour == BOTTOM then
+                            tile_to_draw = TILE_DOOR
+                        elseif y_csv == 1 and (x_csv == 1 or x_csv == size_of_room.x) then
+                            tile_to_draw = TILE_B_T_WALL
+                        elseif y_csv == 1 or y_csv == size_of_room.y then
                             tile_to_draw = TILE_R_L_WALL
                         elseif x_csv == 1 or x_csv == size_of_room.x then
-                             tile_to_draw = TILE_B_T_WALL
+                            tile_to_draw = TILE_B_T_WALL
                         else
-                            tile_to_draw = TILE_FLOOR     -- Inner Floor Tile (1)
+                            tile_to_draw = TILE_FLOOR -- Inner Floor Tile (1)
                         end
                     end
                     line = line .. tile_to_draw .. ","
+                end
+
+                -- 🚀 ADD SEPARATOR COLUMN between rooms (unless it's the last room in the row)
+                if x < vector_dungeon_dimensions.width then
+                    line = line .. TILE_EMPTY .. ","
                 end
             end
 
@@ -199,6 +255,26 @@ function generator.generate_rooms()
 
             -- Insert the complete line into the table, followed by a newline
             table.insert(csvLines, line)
+        end
+        --  ADD SEPARATOR ROW between room rows (unless it's the last row of rooms)
+        if y < vector_dungeon_dimensions.height then
+            local separator_line = ""
+            -- The total width of a separator row is:
+            -- (vector_dungeon_dimensions.width * size_of_room.x) + (vector_dungeon_dimensions.width - 1) * 1
+            -- (Room Columns) + (Separator Columns)
+            local total_width = (vector_dungeon_dimensions.width * size_of_room.x) +
+                (vector_dungeon_dimensions.width - 1)
+
+            for i = 1, total_width do
+                separator_line = separator_line .. TILE_EMPTY .. ","
+            end
+
+            -- Remove the trailing comma
+            if #separator_line > 0 then
+                separator_line = string.sub(separator_line, 1, #separator_line - 1)
+            end
+
+            table.insert(csvLines, separator_line)
         end
     end
 
@@ -222,6 +298,14 @@ function generator.print_dungeon()
             end
         end
         print(row)
+    end
+end
+
+function generator.struct_generator()
+    for y = 1, vector_dungeon_dimensions.height do
+        for x = 1, vector_dungeon_dimensions.width do
+            -- create struct
+        end
     end
 end
 
